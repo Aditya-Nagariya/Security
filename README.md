@@ -1,36 +1,140 @@
-# Ultimate Kali Linux Security Maintenance Script
-
-![Hacker Theme](https://img.shields.io/badge/Hack-TheFuture-green?style=for-the-badge&logo=cybersecurity)
-
-> “Hacking the future, one command at a time.”
-
 ---
+
+markdown
+# Kali Linux Security Maintenance Script
 
 ## Overview
 
-Welcome to the future of system security! The **Ultimate Kali Linux Security Maintenance Script** is a next‑generation tool designed for Kali Linux, automating system updates, dependency fixes, security scans, and more—all while delivering a visually dynamic and interactive experience.
+The **Ultimate Kali Linux Security Maintenance Script** is an automated, comprehensive tool designed for maintaining and securing Kali Linux systems. It performs a variety of essential tasks, including:
 
-This script leverages advanced multi-threading and real‑time progress animations to bring you a maintenance tool that’s as effective as it is stylish. Whether you’re a seasoned hacker, security enthusiast, or system administrator, this tool keeps your system in peak condition with minimal effort.
+- **System Updates & Upgrades:** Automatically updates and upgrades system packages.
+- **Dependency Fixes:** Checks and fixes broken dependencies.
+- **Security Tools Installation:** Installs tools such as RKHunter, ChkRootkit, ClamAV, and more.
+- **System Log Cleanup:** Clears outdated logs to free up disk space.
+- **Virus Database Updates & Scans:** Updates ClamAV’s virus database and performs multi-threaded scans with animated progress feedback.
+- **Security Scans:** Runs RKHunter and ChkRootkit scans.
+- **Resource Monitoring:** Checks disk space and current system resource usage.
 
----
+The script emphasizes visual feedback with dynamic progress bars, spinners, and colorful output, making long maintenance tasks more engaging. It also includes robust logging and error handling, ensuring that all operations are documented for later review.
 
 ## Features
 
-- **Multi-threaded Execution**: Run multiple maintenance tasks in parallel for drastically reduced downtime.
-- **Dynamic Progress Bar**: Enjoy a slick, animated progress indicator that updates live from 1% to 100%.
-- **Interactive Disclaimer**: A full-screen disclaimer ensures you understand the risks before proceeding.
-- **Automated System Maintenance**: Seamlessly performs system updates, dependency fixes, security tool installations, log cleaning, virus database updates, and more.
-- **Advanced Logging**: Timestamped logs for every operation help with auditing and troubleshooting.
-- **Futuristic, Hacking-Inspired UI**: A visually appealing interface that sets the tone for next‑gen cybersecurity.
+- **Dynamic Progress Bar Animation:**  
+  Provides real-time visual feedback with percentage completion, spinners, and elapsed time.
+  
+- **Comprehensive Logging:**  
+  All output is saved to a log file (e.g., `/var/log/security_maintenance/security_scan_<timestamp>.log`) with timestamps.
 
----
+- **Interactive User Menu:**  
+  Allows selection between different scan intensities (Light, Medium, Deep) based on the desired thoroughness.
+
+- **Full Disclaimer and Warning:**  
+  Displays a detailed disclaimer and warning directly in the terminal, requiring user acknowledgement before proceeding.
+
+- **Graceful Cleanup:**  
+  Includes signal traps to clean up background processes if the script is interrupted.
+
+- **Multi-threaded Scanning:**  
+  Automatically uses `clamdscan` (if available) for a faster, multi-threaded ClamAV scan, otherwise falls back to `clamscan` with multiscan.
+
+## Prerequisites
+
+- **Operating System:**  
+  Kali Linux or any Debian-based system.
+
+- **Root Privileges:**  
+  The script must be run with root privileges (e.g., using `sudo`).
+
+- **Dependencies:**
+  - `bash`, `tee`, and standard Unix utilities.
+  - **Optional:** `figlet` (for enhanced ASCII banners).
+  - Security packages: `clamav`, `clamav-daemon`, `rkhunter`, `chkrootkit`, etc.
 
 ## Installation
 
-### Prerequisites
-- **Kali Linux** (Tested on Kali Rolling)
-- **Root privileges**
-- *Optional:* [figlet](https://linux.die.net/man/1/figlet) for enhanced ASCII banners  
-  Install with:
-  ```bash
-  sudo apt-get install figlet
+1. **Clone the Repository:**
+   bash
+   git clone https://github.com/Aditya-Nagariya/kali-security-maintenance.git
+   cd kali-security-maintenance
+   
+
+2. **Make the Script Executable:**
+   bash
+   chmod +x security_maintenance.sh
+   
+
+## Usage
+
+Run the script as root:
+bash
+sudo ./kali_security_maintenance.sh
+
+
+Upon execution, you will see a full-screen disclaimer and warning message. **You must press Enter to acknowledge** the disclaimer before any maintenance operations begin.
+
+### User Interaction
+
+- **Disclaimer Acknowledgement:**  
+  The script displays a comprehensive disclaimer and warning directly in the terminal. This ensures that users understand the risks involved before proceeding.
+
+- **Scan Intensity Selection:**  
+  The script offers three scan modes:
+  - **Light Scan:** Critical areas only (faster).
+  - **Medium Scan:** System and important directories.
+  - **Deep Scan:** Full system scan (most thorough).
+
+- **Dynamic Progress Feedback:**  
+  Each maintenance task features a dynamic progress bar that visually displays task progress, percentage completion, and elapsed time.
+
+## Disclaimer and Warning
+
+> **IMPORTANT:**  
+> This script is provided **"AS IS"** without any warranty of any kind, either expressed or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement.  
+>
+> **USE THIS SCRIPT AT YOUR OWN RISK. THE AUTHOR IS NOT RESPONSIBLE FOR ANY DAMAGE, DATA LOSS, OR SYSTEM INSTABILITY THAT MAY RESULT FROM ITS USE.**
+>
+> **WARNING:**  
+> This script makes system-level changes, including package upgrades, security scans, and file deletions. Interrupting critical operations (e.g., system updates or virus database updates) may result in an unstable or broken system.  
+> Please test in a safe environment before deploying in production.
+>
+> By using this script, you agree that the author is not responsible for any damages or losses incurred.
+
+## Logging
+
+- **Log File Location:**  
+  All output is logged to `/var/log/security_maintenance/` with a timestamp in the filename.  
+- **Purpose:**  
+  Logs help with troubleshooting and auditing the maintenance tasks performed.
+
+## Contribution Guidelines
+
+We welcome contributions! To contribute:
+
+1. **Fork the Repository.**
+2. **Create a Feature Branch:**  
+   Use descriptive branch names (e.g., `feature/improve-progress-bar`).
+3. **Submit Pull Requests:**  
+   Ensure your code adheres to the style and guidelines of the project. Include detailed descriptions of your changes.
+4. **Issues:**  
+   For major changes or improvements, please open an issue first to discuss your ideas.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for further details.
+
+## Acknowledgements
+
+- Thanks to the open source community for the tools and inspiration behind this script.
+- Special thanks to developers and maintainers of ClamAV, RKHunter, and other security tools.
+
+## Contact
+
+For questions, suggestions, or bug reports, please open an issue on GitHub or contact the author at [adityanagariyav@gmail.com](mailto:adityanagariyav@gmail.com).
+
+---
+
+
+
+---
+
+

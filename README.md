@@ -54,8 +54,7 @@ The script emphasizes visual feedback with dynamic progress bars, spinners, and 
 
 1. **Clone the Repository:**
    bash
-   git clone https://github.com/Aditya-Nagariya/kali-security-maintenance.git
-   cd kali-security-maintenance
+   git clone https://github.com/Aditya-Nagariya/kali-security-maintenance.git && cd kali-security-maintenance
    
 
 2. **Make the Script Executable:**
@@ -102,9 +101,37 @@ Upon execution, you will see a full-screen disclaimer and warning message. **You
 ## Logging
 
 - **Log File Location:**  
-  All output is logged to `/var/log/security_maintenance/` with a timestamp in the filename.  
+  All output is logged to `/var/log/security_maintenance/` with a timestamp in the filename.
 - **Purpose:**  
   Logs help with troubleshooting and auditing the maintenance tasks performed.
+
+## Kali Submission Information
+
+The following metadata is provided for submitting this tool to Kali Linux:
+
+- **[Name]:** Kali Linux Security Maintenance Script
+- **[Version]:** 1.0.0  
+  (Ensure that a release/tag exists in the repository to match this version.)
+- **[Homepage]:** [https://github.com/Aditya-Nagariya/kali-security-maintenance](https://github.com/Aditya-Nagariya/kali-security-maintenance)
+- **[Download]:** [Latest Release](https://github.com/Aditya-Nagariya/kali-security-maintenance/releases/latest)
+- **[Author]:** Aditya Nagariya (adityanagariyav@gmail.com)
+- **[Licence]:** MIT License (see [LICENSE](LICENSE))
+- **[Description]:**  
+  A comprehensive, automated security maintenance tool for Kali Linux. It performs system updates, dependency fixes, security scans (including ClamAV, RKHunter, and ChkRootkit), log cleanups, and system resource monitoring with an interactive animated interface.
+- **[Dependencies]:**  
+  - Bash, tee, and standard Unix utilities  
+  - Optional: figlet  
+  - Security packages: ClamAV, ClamAV-daemon, RKHunter, ChkRootkit, etc.
+- **[Similar tools]:**  
+  Other maintenance scripts exist, but this tool uniquely integrates dynamic progress animations and extensive logging.
+- **[Activity]:**  
+  The project started in 2024 and is actively maintained.
+- **[How to install]:**  
+  Clone the repository, make the script executable, and run it with root privileges (see Installation section).
+- **[How to use]:**  
+  Run `sudo ./kali_security_maintenance.sh` and follow the interactive prompts.
+- **[Packaged]:**  
+  Currently not packaged for Debian. A Debian packaging (`debian/` directory) is planned for future releases.
 
 ## Contribution Guidelines
 
@@ -131,10 +158,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 For questions, suggestions, or bug reports, please open an issue on GitHub or contact the author at [adityanagariyav@gmail.com](mailto:adityanagariyav@gmail.com).
 
----
-
-
 
 ---
-
-

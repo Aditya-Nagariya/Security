@@ -58,12 +58,12 @@ cd Kali_Linux_Security_and_Maintenance
 
 2. **Make Executable**
 ```bash
-chmod +x security_maintenance.sh
+chmod +x Kali_Linux_Security_and_Maintenance.sh
 ```
 
 3. **Run the Script**
 ```bash
-sudo ./security_maintenance.sh
+sudo ./Kali_Linux_Security_and_Maintenance.sh
 ```
 
 ## Detailed Usage Guide
@@ -93,7 +93,7 @@ sudo ./security_maintenance.sh
 
 ### Logging System
 
-- **Location**: `/var/log/security_maintenance/`
+- **Location**: `/var/log/Kali_Linux_Security_and_Maintenance/`
 - **Filename Format**: `security_scan_<timestamp>.log`
 - **Content**: All operations with timestamps
 - **Purpose**: Troubleshooting and audit trail

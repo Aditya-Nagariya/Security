@@ -1,162 +1,199 @@
----
-
-markdown
-# Kali Linux Security Maintenance Script
+# Kali Linux Security Maintenance Script - Complete Guide
 
 ## Overview
 
-The **Ultimate Kali Linux Security Maintenance Script** is an automated, comprehensive tool designed for maintaining and securing Kali Linux systems. It performs a variety of essential tasks, including:
+The Ultimate Kali Linux Security Maintenance Script is an automated tool that maintains and secures Kali Linux systems with visual feedback, comprehensive logging, and interactive features.
 
-- **System Updates & Upgrades:** Automatically updates and upgrades system packages.
-- **Dependency Fixes:** Checks and fixes broken dependencies.
-- **Security Tools Installation:** Installs tools such as RKHunter, ChkRootkit, ClamAV, and more.
-- **System Log Cleanup:** Clears outdated logs to free up disk space.
-- **Virus Database Updates & Scans:** Updates ClamAV’s virus database and performs multi-threaded scans with animated progress feedback.
-- **Security Scans:** Runs RKHunter and ChkRootkit scans.
-- **Resource Monitoring:** Checks disk space and current system resource usage.
+## Key Features
 
-The script emphasizes visual feedback with dynamic progress bars, spinners, and colorful output, making long maintenance tasks more engaging. It also includes robust logging and error handling, ensuring that all operations are documented for later review.
+1. **System Maintenance**
+   - Automated system updates and upgrades
+   - Dependency checking and fixing
+   - Security tools installation
+   - System log cleanup
+   - Virus database updates and scans
+   - Security scans (RKHunter and ChkRootkit)
+   - Resource monitoring
 
-## Features
+2. **User Interface Features**
+   - Dynamic progress bars with completion percentages
+   - Animated spinners
+   - Colorful output feedback
+   - Real-time elapsed time display
+   - Interactive menu system
 
-- **Dynamic Progress Bar Animation:**  
-  Provides real-time visual feedback with percentage completion, spinners, and elapsed time.
-  
-- **Comprehensive Logging:**  
-  All output is saved to a log file (e.g., `/var/log/security_maintenance/security_scan_<timestamp>.log`) with timestamps.
-
-- **Interactive User Menu:**  
-  Allows selection between different scan intensities (Light, Medium, Deep) based on the desired thoroughness.
-
-- **Full Disclaimer and Warning:**  
-  Displays a detailed disclaimer and warning directly in the terminal, requiring user acknowledgement before proceeding.
-
-- **Graceful Cleanup:**  
-  Includes signal traps to clean up background processes if the script is interrupted.
-
-- **Multi-threaded Scanning:**  
-  Automatically uses `clamdscan` (if available) for a faster, multi-threaded ClamAV scan, otherwise falls back to `clamscan` with multiscan.
+3. **Technical Features**
+   - Multi-threaded scanning capabilities
+   - Comprehensive logging system
+   - Signal trap handling for graceful interruptions
+   - Automatic thread optimization
 
 ## Prerequisites
 
-- **Operating System:**  
-  Kali Linux or any Debian-based system.
+1. **System Requirements**
+   - Kali Linux or Debian-based system
+   - Root privileges
+   - Active internet connection
 
-- **Root Privileges:**  
-  The script must be run with root privileges (e.g., using `sudo`).
+2. **Required Packages**
+   - Base requirements:
+     - bash
+     - tee
+     - Standard Unix utilities
+   - Optional enhancement:
+     - figlet (for ASCII banners)
+   - Security packages:
+     - clamav
+     - clamav-daemon
+     - rkhunter
+     - chkrootkit
 
-- **Dependencies:**
-  - `bash`, `tee`, and standard Unix utilities.
-  - **Optional:** `figlet` (for enhanced ASCII banners).
-  - Security packages: `clamav`, `clamav-daemon`, `rkhunter`, `chkrootkit`, etc.
+## Quick Start Guide
 
-## Installation
+1. **Clone the Repository**
+```bash
+git clone https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance.git
+cd Kali_Linux_Security_and_Maintenance
+```
 
-1. **Clone the Repository:**
-   bash
-   git clone https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance.git && cd kali-security-maintenance
-   
+2. **Make Executable**
+```bash
+chmod +x security_maintenance.sh
+```
 
-2. **Make the Script Executable:**
-   bash
-   chmod +x security_maintenance.sh
-   
+3. **Run the Script**
+```bash
+sudo ./security_maintenance.sh
+```
 
-## Usage
+## Detailed Usage Guide
 
-Run the script as root:
-bash
-sudo ./kali_security_maintenance.sh
+### Initial Setup
 
+1. When you first run the script, you'll see a full-screen disclaimer
+2. Read the disclaimer carefully
+3. Press Enter to acknowledge and continue
 
-Upon execution, you will see a full-screen disclaimer and warning message. **You must press Enter to acknowledge** the disclaimer before any maintenance operations begin.
+### Scan Intensity Options
 
-### User Interaction
+1. **Light Scan**
+   - Focuses on critical areas
+   - Fastest completion time
+   - Recommended for routine checks
 
-- **Disclaimer Acknowledgement:**  
-  The script displays a comprehensive disclaimer and warning directly in the terminal. This ensures that users understand the risks involved before proceeding.
+2. **Medium Scan**
+   - Covers system and important directories
+   - Balanced between thoroughness and time
+   - Recommended for regular maintenance
 
-- **Scan Intensity Selection:**  
-  The script offers three scan modes:
-  - **Light Scan:** Critical areas only (faster).
-  - **Medium Scan:** System and important directories.
-  - **Deep Scan:** Full system scan (most thorough).
+3. **Deep Scan**
+   - Complete system analysis
+   - Most thorough option
+   - Recommended for security audits
 
-- **Dynamic Progress Feedback:**  
-  Each maintenance task features a dynamic progress bar that visually displays task progress, percentage completion, and elapsed time.
+### Logging System
 
-## Disclaimer and Warning
+- **Location**: `/var/log/security_maintenance/`
+- **Filename Format**: `security_scan_<timestamp>.log`
+- **Content**: All operations with timestamps
+- **Purpose**: Troubleshooting and audit trail
 
-> **IMPORTANT:**  
-> This script is provided **"AS IS"** without any warranty of any kind, either expressed or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement.  
->
-> **USE THIS SCRIPT AT YOUR OWN RISK. THE AUTHOR IS NOT RESPONSIBLE FOR ANY DAMAGE, DATA LOSS, OR SYSTEM INSTABILITY THAT MAY RESULT FROM ITS USE.**
->
-> **WARNING:**  
-> This script makes system-level changes, including package upgrades, security scans, and file deletions. Interrupting critical operations (e.g., system updates or virus database updates) may result in an unstable or broken system.  
-> Please test in a safe environment before deploying in production.
->
-> By using this script, you agree that the author is not responsible for any damages or losses incurred.
+## Important Disclaimers
 
-## Logging
+> **CRITICAL WARNING**
+> 
+> This script is provided "AS IS" without any warranty. Use at your own risk. The author is not responsible for:
+> - System damage
+> - Data loss
+> - System instability
+> - Any other potential issues
 
-- **Log File Location:**  
-  All output is logged to `/var/log/security_maintenance/` with a timestamp in the filename.
-- **Purpose:**  
-  Logs help with troubleshooting and auditing the maintenance tasks performed.
+### Risk Factors
 
-## Kali Submission Information
+- Makes system-level changes
+- Performs package upgrades
+- Conducts security scans
+- Deletes certain files
+- May impact system stability if interrupted
 
-The following metadata is provided for submitting this tool to Kali Linux:
+## Technical Details
 
-- **[Name]:** Kali Linux Security Maintenance Script
-- **[Version]:** 1.0.0  
-  (Ensure that a release/tag exists in the repository to match this version.)
-- **[Homepage]:** [https://github.com/Aditya-Nagariya/kali-security-maintenance](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance)
-- **[Download]:** [Latest Release](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance/releases/latest)
-- **[Author]:** Aditya Nagariya (adityanagariyav@gmail.com)
-- **[Licence]:** MIT License (see [LICENSE](LICENSE))
-- **[Description]:**  
-  A comprehensive, automated security maintenance tool for Kali Linux. It performs system updates, dependency fixes, security scans (including ClamAV, RKHunter, and ChkRootkit), log cleanups, and system resource monitoring with an interactive animated interface.
-- **[Dependencies]:**  
-  - Bash, tee, and standard Unix utilities  
-  - Optional: figlet  
-  - Security packages: ClamAV, ClamAV-daemon, RKHunter, ChkRootkit, etc.
-- **[Similar tools]:**  
-  Other maintenance scripts exist, but this tool uniquely integrates dynamic progress animations and extensive logging.
-- **[Activity]:**  
-  The project started in 2024 and is actively maintained.
-- **[How to install]:**  
-  Clone the repository, make the script executable, and run it with root privileges (see Installation section).
-- **[How to use]:**  
-  Run `sudo ./kali_security_maintenance.sh` and follow the interactive prompts.
-- **[Packaged]:**  
-  Currently not packaged for Debian. A Debian packaging (`debian/` directory) is planned for future releases.
+### Multi-threading Implementation
 
-## Contribution Guidelines
+- Uses `clamdscan` when available
+- Falls back to `clamscan` with multiscan
+- Automatically optimizes thread count
 
-We welcome contributions! To contribute:
+### Error Handling
 
-1. **Fork the Repository.**
-2. **Create a Feature Branch:**  
-   Use descriptive branch names (e.g., `feature/improve-progress-bar`).
-3. **Submit Pull Requests:**  
-   Ensure your code adheres to the style and guidelines of the project. Include detailed descriptions of your changes.
-4. **Issues:**  
-   For major changes or improvements, please open an issue first to discuss your ideas.
+- Comprehensive error logging
+- Graceful failure management
+- Background process cleanup
+- Signal trap implementation
 
-## License
+## Kali Linux Integration Details
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for further details.
+### Metadata
+
+- **Name**: Kali Linux Security Maintenance Script
+- **Version**: 1.0.0
+- **Homepage**: [GitHub Repository](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance)
+- **Download**: [Latest Release](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance/releases/latest)
+- **Author**: Aditya Nagariya (adityanagariyav@gmail.com)
+- **License**: MIT License
+
+## Contributing
+
+1. **Fork the Repository**
+
+2. **Branch Creation**
+   - Use descriptive names
+   - Example: `feature/improve-progress-bar`
+
+3. **Pull Request Guidelines**
+   - Follow project style
+   - Include detailed descriptions
+   - Test thoroughly
+
+4. **Issue Reporting**
+   - Open issues for major changes
+   - Provide detailed descriptions
+   - Include system information
+
+## Troubleshooting Guide
+
+1. **Common Issues**
+   - Script won't start
+   - Scan interruptions
+   - Progress bar issues
+   - Update failures
+
+2. **Solutions**
+   - Verify root privileges
+   - Check internet connection
+   - Confirm disk space
+   - Review log files
+
+## Support and Contact
+
+- **GitHub Issues**: Preferred for bug reports and features
+- **Email**: adityanagariyav@gmail.com
+- **Documentation**: Available in repository
+
+## Future Development
+
+- Debian packaging planned
+- Additional security tools integration
+- Enhanced reporting features
+- GUI interface consideration
 
 ## Acknowledgements
 
-- Thanks to the open source community for the tools and inspiration behind this script.
-- Special thanks to developers and maintainers of ClamAV, RKHunter, and other security tools.
+- ClamAV development team
+- RKHunter developers
+- ChkRootkit team
+- Open source community
 
-## Contact
+## License Information
 
-For questions, suggestions, or bug reports, please open an issue on GitHub or contact the author at [adityanagariyav@gmail.com](mailto:adityanagariyav@gmail.com).
-
-
----
+Released under MIT License. See LICENSE file in repository for full details.

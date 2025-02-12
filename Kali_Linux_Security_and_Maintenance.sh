@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Global Variables
-LOG_DIR="/var/log/security_maintenance"
+LOG_DIR="/var/log/Kali_Linux_Security_and_Maintenance"
 LOG_FILE="$LOG_DIR/security_scan_$(date +%Y%m%d_%H%M%S).log"
 START_TIME=$(date +%s)
 
@@ -81,7 +81,7 @@ display_banner() {
         figlet -c "Security Maintenance"
     else
         echo -e "${BLUE}========================================"
-        echo -e "      SECURITY MAINTENANCE SCRIPT"
+        echo -e "     KALI LINUX SECURITY AND MAINTENANCE"
         echo -e "========================================${NC}"
     fi
 }
@@ -176,11 +176,11 @@ print_status "Scan mode: $scan_choice - Estimated Time: ${TIME_ESTIMATE}s"
 
 # Display estimated time per GB table for ClamAV
 print_status "Estimated Time Per GB for ClamAV (clamscan):"
-printf "%-40s %-20s %-20s\n" "System Type" "Time per GB (SSD)" "Time per GB (HDD/VM)"
-printf "%-40s %-20s %-20s\n" "----------------------------------------" "--------------------" "--------------------"
-printf "%-40s %-20s %-20s\n" "Light System (Few Large Files)" "30 sec – 2 min" "1 – 3 min"
-printf "%-40s %-20s %-20s\n" "Moderate System (Mixed Files)" "2 – 5 min" "3 – 7 min"
-printf "%-40s %-20s %-20s\n" "Heavy System (Millions of Small Files)" "5 – 10+ min" "7 – 15+ min"
+printf "%-40s %-30S %-30S\n" "System Type" "Time per GB (SSD)" "Time per GB (HDD/VM)"
+printf "%-40s %-30S %-30S\n" "----------------------------------------" "--------------------" "--------------------"
+printf "%-40s %-30S %-30S\n" "Light System (Few Large Files)" "30 sec – 2 min" "1 – 3 min"
+printf "%-40s %-30S %-30S\n" "Moderate System (Mixed Files)" "2 – 5 min" "3 – 7 min"
+printf "%-40s %-30S %-30S\n" "Heavy System (Millions of Small Files)" "5 – 10+ min" "7 – 15+ min"
 echo ""
 
 ########################################

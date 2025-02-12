@@ -54,7 +54,7 @@ The script emphasizes visual feedback with dynamic progress bars, spinners, and 
 
 1. **Clone the Repository:**
    bash
-   git clone https://github.com/Aditya-Nagariya/kali-security-maintenance.git && cd kali-security-maintenance
+   git clone https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance.git && cd kali-security-maintenance
    
 
 2. **Make the Script Executable:**
@@ -112,8 +112,8 @@ The following metadata is provided for submitting this tool to Kali Linux:
 - **[Name]:** Kali Linux Security Maintenance Script
 - **[Version]:** 1.0.0  
   (Ensure that a release/tag exists in the repository to match this version.)
-- **[Homepage]:** [https://github.com/Aditya-Nagariya/kali-security-maintenance](https://github.com/Aditya-Nagariya/kali-security-maintenance)
-- **[Download]:** [Latest Release](https://github.com/Aditya-Nagariya/kali-security-maintenance/releases/latest)
+- **[Homepage]:** [https://github.com/Aditya-Nagariya/kali-security-maintenance](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance)
+- **[Download]:** [Latest Release](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance/releases/latest)
 - **[Author]:** Aditya Nagariya (adityanagariyav@gmail.com)
 - **[Licence]:** MIT License (see [LICENSE](LICENSE))
 - **[Description]:**  

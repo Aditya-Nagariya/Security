@@ -220,7 +220,7 @@ This script performs system-level operations. Use with caution.
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance/issues)
-- **Email**: the.anonymous.hacker@icloud.com
+- **Email**: adityanagariyav@gmail.com
 - **Documentation**: [Wiki](https://github.com/Aditya-Nagariya/Kali_Linux_Security_and_Maintenance/wiki)
 
 ---

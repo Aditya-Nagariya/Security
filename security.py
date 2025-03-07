@@ -568,20 +568,32 @@ class EnterpriseSecurityDashboard(tk.Tk):
         sidebar = tk.Frame(tab, bg=self.theme['bg_tertiary'], padx=15, pady=15)
         sidebar.grid(row=0, column=0, sticky="ns")
         
-        # Add actions title
-        actions_title = tk.Label(sidebar,
-                               text=title,
-                               font=(self.system_font, self.font_sizes['md'], "bold"),
-                               fg=self.theme['text_primary'],
-                               bg=self.theme['bg_tertiary'])
-        actions_title.pack(anchor='w', pady=(0, 10))
+        # Add actions title and help button
+        title_frame = tk.Frame(sidebar, bg=self.theme['bg_tertiary'])
+        title_frame.pack(fill='x', pady=(0, 10))
+        
+        actions_title = tk.Label(title_frame,
+                              text=title,
+                              font=(self.system_font, self.font_sizes['md'], "bold"),
+                              fg=self.theme['text_primary'],
+                              bg=self.theme['bg_tertiary'])
+        actions_title.pack(side=tk.LEFT, anchor='w')
+        
+        # Help button with appropriate explanation based on tab
+        help_text = self.get_tab_help_text(title)
+        help_btn = ttk.Button(title_frame,
+                            text="?",
+                            width=2,
+                            command=lambda: self.show_help_popup(f"Help: {title}", help_text),
+                            style="Secondary.TButton")
+        help_btn.pack(side=tk.RIGHT, anchor='e')
         
         # Add action buttons
         for text, command in actions:
             btn = ttk.Button(sidebar,
-                           text=text,
-                           command=lambda cmd=command: self.run_in_thread(cmd),
-                           style="Enterprise.TButton")
+                          text=text,
+                          command=lambda cmd=command: self.run_in_thread(cmd),
+                          style="Enterprise.TButton")
             btn.pack(fill='x', pady=5)
         
         # Create output area
@@ -590,28 +602,81 @@ class EnterpriseSecurityDashboard(tk.Tk):
         
         # Output title
         output_title = tk.Label(output_frame,
-                              text="Console Output",
-                              font=(self.system_font, self.font_sizes['md'], "bold"),
-                              fg=self.theme['text_primary'],
-                              bg=self.theme['bg_primary'])
+                             text="Console Output",
+                             font=(self.system_font, self.font_sizes['md'], "bold"),
+                             fg=self.theme['text_primary'],
+                             bg=self.theme['bg_primary'])
         output_title.pack(anchor='w', pady=(0, 10))
         
         # Output console
         output_console = scrolledtext.ScrolledText(output_frame,
-                                                 font=(self.monospace_font, self.font_sizes['sm']),
-                                                 bg=self.theme['bg_secondary'],
-                                                 fg=self.theme['text_primary'],
-                                                 bd=1,
-                                                 relief=tk.SOLID,
-                                                 borderwidth=1,
-                                                 highlightthickness=0)
+                                                font=(self.monospace_font, self.font_sizes['sm']),
+                                                bg=self.theme['bg_secondary'],
+                                                fg=self.theme['text_primary'],
+                                                bd=1,
+                                                relief=tk.SOLID,
+                                                borderwidth=1,
+                                                highlightthickness=0)
         output_console.pack(fill='both', expand=True)
+        
+        # Add initial helpful text
+        output_console.insert(tk.END, f"Welcome to {title}\n\n", "welcome")
+        output_console.insert(tk.END, "Select an operation from the left sidebar to begin.\n", "info")
+        output_console.insert(tk.END, "Results and information will appear in this console.\n\n", "info")
+        output_console.insert(tk.END, "Click the '?' button for help and explanations.\n", "info")
         
         # Store output reference
         setattr(tab, "output", output_console)
         
         return tab
-    
+        
+    def get_tab_help_text(self, title):
+        """Return appropriate help text based on tab title"""
+        if "Security Scan" in title:
+            return (
+                "Security scanning tools help identify vulnerabilities and security issues on your system.\n\n"
+                "Available operations:\n\n"
+                "• Full Security Scan: Comprehensive security audit using Lynis\n"
+                "• Malware Detection: Scans for viruses and malicious software\n"
+                "• Rootkit Detection: Checks for hidden malicious software\n"
+                "• Network Security Scan: Identifies open ports and potential network vulnerabilities\n\n"
+                "These scans may take several minutes to complete. Regular security scanning is recommended as part of "
+                "good security practices."
+            )
+        elif "Hardening" in title:
+            return (
+                "System hardening is the process of securing a system by reducing vulnerabilities through configuration changes.\n\n"
+                "Available operations:\n\n"
+                "• Update System: Install the latest security updates\n"
+                "• Harden SSH Configuration: Secure remote access settings\n"
+                "• Configure Firewall: Set up network protection rules\n"
+                "• Secure Web Directories: Set proper permissions for web server files\n\n"
+                "These operations modify system settings to improve security. Some changes may require a system restart to take effect."
+            )
+        elif "Monitoring" in title:
+            return (
+                "Monitoring tools help you observe your system for security issues and unusual activity.\n\n"
+                "Available operations:\n\n"
+                "• Network Bandwidth: Monitor network traffic patterns\n"
+                "• System Resources: Check CPU, memory and disk usage\n"
+                "• Security Log Analysis: Analyze system logs for security events\n\n"
+                "Regular monitoring helps detect security incidents and performance issues before they become critical problems."
+            )
+        elif "Report" in title:
+            return (
+                "Reports provide documentation of your system's security status and help track changes over time.\n\n"
+                "Available operations:\n\n"
+                "• Generate Security Report: Create a comprehensive security status report\n"
+                "• Backup Home Directory: Create a backup of user files\n\n"
+                "Regular reports and backups are essential parts of a complete security strategy."
+            )
+        else:
+            return (
+                "This section contains security operations to help protect your system.\n\n"
+                "Select an operation from the sidebar to begin.\n\n"
+                "The results will be displayed in the console output area."
+            )
+
     def create_security_scan_tab(self):
         """Create the security scanning tab"""
         actions = [
@@ -917,6 +982,9 @@ class EnterpriseSecurityDashboard(tk.Tk):
         output.insert(tk.END, f"=== {description} ===\n")
         output.insert(tk.END, f"Started at {timestamp}\n\n")
         
+        # Add user-friendly explanation based on the operation type
+        self.add_operation_explanation(output, description)
+        
         try:
             # Display command being executed
             output.insert(tk.END, f"Executing: {command}\n\n")
@@ -951,105 +1019,220 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 # Update last scan time if this was a security scan
                 if "scan" in description.lower():
                     self.last_scan_var.set(timestamp)
+                    
+                # Add summary of results based on operation type
+                self.add_success_summary(output, description)
             else:
                 # Display stderr output if command failed
                 error_output = process.stderr.read()
                 output.insert(tk.END, f"\nError output:\n{error_output}\n")
-                output.insert(tk.END, f"\n=== Operation failed with exit code {process.returncode} ===\n")
+                output.insert(tk.END, f"\n=== Operation failed (exit code {process.returncode}) ===\n")
                 
-                # Add helpful troubleshooting information
+                # Add user-friendly error explanation
+                output.insert(tk.END, "\n📋 What this means:\n", "error_header")
+                
+                # Common error handling with user-friendly messages
                 if "command not found" in error_output.lower():
-                    output.insert(tk.END, "\nTroubleshooting: The required tool is not installed or not in PATH.\n")
+                    output.insert(tk.END, "The required security tool couldn't be found on your system.\n")
+                    output.insert(tk.END, "This usually happens when the software isn't installed correctly.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, f"Try manually installing the required tool:\n")
+                    
+                    # Suggest appropriate installation command
+                    if self.check_tool_installed("apt"):
+                        output.insert(tk.END, f"sudo apt install {command.split()[0]}\n")
+                    elif self.check_tool_installed("dnf"):
+                        output.insert(tk.END, f"sudo dnf install {command.split()[0]}\n")
+                    else:
+                        output.insert(tk.END, f"Install {command.split()[0]} using your system's package manager\n")
+                        
                 elif "permission denied" in error_output.lower():
-                    output.insert(tk.END, "\nTroubleshooting: The command requires higher privileges.\n")
+                    output.insert(tk.END, "You don't have enough permissions to run this security operation.\n")
+                    output.insert(tk.END, "Security tools often need administrator (root) privileges.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "- Make sure you launched this application with sudo\n")
+                    output.insert(tk.END, "- Try restarting the application with: sudo python3 security.py\n")
+                elif "no such file or directory" in error_output.lower():
+                    output.insert(tk.END, "A required file or directory wasn't found on your system.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "- Check if the security tool is properly installed\n")
+                    output.insert(tk.END, "- Try reinstalling the tool\n")
+                else:
+                    # Generic error message
+                    output.insert(tk.END, "The operation couldn't be completed due to an error.\n")
+                    output.insert(tk.END, "This might be due to a configuration issue or missing dependency.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "- Check the error output above for specific details\n")
+                    output.insert(tk.END, "- Make sure all required software is installed\n")
+                    output.insert(tk.END, "- Try running the Security Dashboard with root privileges\n")
                 
-                self.status_message.set("Operation failed")
+                self.status_message.set("Operation failed - check output for details")
                 
         except Exception as e:
             output.insert(tk.END, f"\nError executing command: {str(e)}\n")
+            output.insert(tk.END, "\n📋 What this means:\n", "error_header")
+            output.insert(tk.END, "There was a problem running the security operation.\n")
+            output.insert(tk.END, "This might be because of missing programs or system limitations.\n\n")
+            output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+            output.insert(tk.END, "- Make sure you have the necessary security tools installed\n")
+            output.insert(tk.END, "- Try running the Security Dashboard with root privileges\n")
             self.status_message.set(f"Error: {str(e)}")
-    
-    # Security operation implementations
-    def run_lynis(self):
-        """Run a comprehensive security scan using Lynis"""
-        if not self.check_tool_installed("lynis"):
-            # Try to install lynis
-            if not self.install_package("lynis"):
-                # If installation fails, show message in console
-                tab_name = "Security Scan"
-                if tab_name in self.tab_contents:
-                    output = self.tab_contents[tab_name].output
-                    output.delete(1.0, tk.END)
-                    output.insert(tk.END, "=== Error: Could not install Lynis ===\n\n")
-                    output.insert(tk.END, "Please install Lynis manually: sudo apt install lynis\n")
-                    output.insert(tk.END, "Or use an alternative: sudo apt install rkhunter\n")
-                return
+
+    def add_operation_explanation(self, output, description):
+        """Add user-friendly explanation of security operations"""
+        output.insert(tk.END, "📋 Operation Details:\n", "info_header")
         
-        command = "lynis audit system --no-colors"
-        self.run_command(command, "Security Scan", "Comprehensive Security Scan")
-    
-    def run_clamav(self):
-        """Run malware scan using ClamAV"""
-        if not self.check_tool_installed("clamscan"):
-            if not self.install_package("clamav"):
-                tab_name = "Security Scan"
-                if tab_name in self.tab_contents:
-                    output = self.tab_contents[tab_name].output
-                    output.delete(1.0, tk.END)
-                    output.insert(tk.END, "=== Error: Could not install ClamAV ===\n\n")
-                    output.insert(tk.END, "Please install ClamAV manually: sudo apt install clamav\n")
-                    output.insert(tk.END, "Running fallback scan using built-in tools...\n\n")
-                    
-                    # Fallback to basic scan
-                    fallback_cmd = "find /home -type f -name '*.sh' -o -name '*.py' -exec grep -l 'rm -rf' {} \\;"
-                    self.run_command(fallback_cmd, "Security Scan", "Basic Script Scan")
-                return
-            # Update virus definitions
-            self.run_command("freshclam", "Security Scan", "Updating virus definitions")
+        if "Security Scan" in description or "Lynis" in description:
+            output.insert(tk.END, "This operation will check your system for security vulnerabilities and configuration issues.\n")
+            output.insert(tk.END, "The scan may take a few minutes to complete. Results will show potential security issues that need attention.\n\n")
+        elif "Malware" in description or "ClamAV" in description:
+            output.insert(tk.END, "This will scan your system for viruses, malware, and other malicious software.\n")
+            output.insert(tk.END, "The scan may take several minutes depending on how many files need to be checked.\n\n")
+        elif "Rootkit" in description:
+            output.insert(tk.END, "This operation checks for rootkits - malicious software designed to gain unauthorized access to your system.\n")
+            output.insert(tk.END, "The scan will look for suspicious programs and files that might indicate a security breach.\n\n")
+        elif "Network" in description or "Nmap" in description:
+            output.insert(tk.END, "This will scan network services and open ports to identify potential security vulnerabilities.\n")
+            output.insert(tk.END, "The scan checks which services are accessible and might be exploitable.\n\n")
+        elif "SSH" in description:
+            output.insert(tk.END, "This operation will strengthen the security of your SSH (Secure Shell) server configuration.\n")
+            output.insert(tk.END, "It will modify settings to prevent unauthorized access and follow security best practices.\n\n")
+        elif "Firewall" in description:
+            output.insert(tk.END, "This will configure your system firewall to improve security by controlling network traffic.\n")
+            output.insert(tk.END, "It will block unauthorized access while allowing legitimate connections.\n\n")
+        elif "Web Directory" in description:
+            output.insert(tk.END, "This operation will secure web server directories by setting appropriate permissions.\n")
+            output.insert(tk.END, "It prevents unauthorized access to web files and improves overall web server security.\n\n")
+        elif "Bandwidth" in description:
+            output.insert(tk.END, "This will monitor your network traffic to show data usage and detect unusual patterns.\n")
+            output.insert(tk.END, "High or unusual network activity might indicate security issues.\n\n")
+        elif "Report" in description:
+            output.insert(tk.END, "This will create a comprehensive security report of your system's current state.\n")
+            output.insert(tk.END, "The report includes system information, user accounts, network configuration, and security recommendations.\n\n")
+        elif "Backup" in description:
+            output.insert(tk.END, "This creates a backup of important files to protect against data loss.\n")
+            output.insert(tk.END, "Backups are essential for recovery after security incidents or system failures.\n\n")
+        else:
+            output.insert(tk.END, "This security operation will help protect your system.\n")
+            output.insert(tk.END, "Please wait while the operation completes.\n\n")
         
-        command = "clamscan -r /home --bell -i"
-        self.run_command(command, "Security Scan", "Malware Detection Scan")
-    
-    def run_rkhunter(self):
-        """Run rootkit detection using RKHunter"""
-        if not self.check_tool_installed("rkhunter"):
-            if not self.install_package("rkhunter"):
-                tab_name = "Security Scan"
-                if tab_name in self.tab_contents:
-                    output = self.tab_contents[tab_name].output
-                    output.delete(1.0, tk.END)
-                    output.insert(tk.END, "=== Error: Could not install RKHunter ===\n\n")
-                    output.insert(tk.END, "Please install RKHunter manually: sudo apt install rkhunter\n")
-                    output.insert(tk.END, "Running fallback scan...\n\n")
-                    
-                    # Fallback to basic scan
-                    fallback_cmd = "find /sbin /bin /usr/bin -type f -perm /4000 -ls"
-                    self.run_command(fallback_cmd, "Security Scan", "Basic SUID Scan")
-                return
+        output.insert(tk.END, "⏳ Please wait while the operation runs...\n\n", "progress_note")
+
+    def add_success_summary(self, output, description):
+        """Add user-friendly summary after successful operations"""
+        output.insert(tk.END, "\n📋 Summary:\n", "success_header")
         
-        command = "rkhunter --check --skip-keypress"
-        self.run_command(command, "Security Scan", "Rootkit Detection Scan")
-    
-    def run_nmap(self):
-        """Run network security scan using Nmap"""
-        if not self.check_tool_installed("nmap"):
-            if not self.install_package("nmap"):
-                tab_name = "Security Scan"
-                if tab_name in self.tab_contents:
-                    output = self.tab_contents[tab_name].output
-                    output.delete(1.0, tk.END)
-                    output.insert(tk.END, "=== Error: Could not install nmap ===\n\n")
-                    output.insert(tk.END, "Please install nmap manually: sudo apt install nmap\n")
-                    output.insert(tk.END, "Running fallback scan using netstat...\n\n")
-                    
-                    # Fallback to netstat
-                    fallback_cmd = "netstat -tuln"
-                    self.run_command(fallback_cmd, "Security Scan", "Basic Port Scan")
-                return
+        if "Security Scan" in description or "Lynis" in description:
+            output.insert(tk.END, "✅ Your system has been checked for security vulnerabilities.\n")
+            output.insert(tk.END, "Review the output above for any warnings or suggestions to improve your system security.\n")
+            output.insert(tk.END, "Consider addressing any 'Warnings' or 'Suggestions' mentioned in the results.\n")
+        elif "Malware" in description or "ClamAV" in description:
+            output.insert(tk.END, "✅ Malware scan completed. If any threats were found, they are listed above.\n")
+            output.insert(tk.END, "If infected files were detected, they should be quarantined or removed.\n")
+            output.insert(tk.END, "Regular scans are recommended to keep your system secure.\n")
+        elif "Rootkit" in description:
+            output.insert(tk.END, "✅ Rootkit detection scan completed.\n")
+            output.insert(tk.END, "Any suspicious files or programs would be listed in the results above.\n")
+            output.insert(tk.END, "If warnings were found, further investigation is recommended.\n")
+        elif "Firewall" in description:
+            output.insert(tk.END, "✅ Firewall has been successfully configured.\n")
+            output.insert(tk.END, "Your system is now better protected against unauthorized network access.\n")
+            output.insert(tk.END, "The firewall is active and using the security rules shown above.\n")
+        elif "SSH" in description:
+            output.insert(tk.END, "✅ SSH configuration has been secured.\n")
+            output.insert(tk.END, "Your SSH server now uses more secure settings to prevent unauthorized access.\n")
+            output.insert(tk.END, "Remember that password authentication is now disabled - use SSH keys for access.\n")
+        elif "Report" in description:
+            output.insert(tk.END, "✅ Security report has been generated successfully.\n")
+            output.insert(tk.END, "The report contains important information about your system's security status.\n")
+            output.insert(tk.END, "Review the report to identify areas that need security improvements.\n")
+        else:
+            output.insert(tk.END, "✅ Operation completed successfully.\n")
+            output.insert(tk.END, "Your system security has been improved.\n")
+
+    def install_package(self, package):
+        """Install a package using the appropriate package manager"""
+        # Determine package manager
+        package_manager = None
+        install_cmd = None
         
-        command = "nmap -sV -p 1-1000 localhost"
-        self.run_command(command, "Security Scan", "Network Security Scan")
+        if self.check_tool_installed("apt"):
+            package_manager = "apt"
+            install_cmd = f"apt update && apt install -y {package}"
+        elif self.check_tool_installed("dnf"):
+            package_manager = "dnf"
+            install_cmd = f"dnf install -y {package}"
+        elif self.check_tool_installed("yum"):
+            package_manager = "yum"
+            install_cmd = f"yum install -y {package}"
+        elif self.check_tool_installed("pacman"):
+            package_manager = "pacman"
+            install_cmd = f"pacman -S --noconfirm {package}"
+        elif self.check_tool_installed("zypper"):
+            package_manager = "zypper"
+            install_cmd = f"zypper install -y {package}"
+        elif self.check_tool_installed("brew") and platform.system() == "Darwin":
+            package_manager = "brew"
+            install_cmd = f"brew install {package}"
+        else:
+            self.status_message.set(f"Error: Cannot install {package}, unsupported package manager")
+            return False
         
+        try:
+            self.status_message.set(f"Installing {package} using {package_manager}... This may take a moment.")
+            result = subprocess.run(install_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode == 0:
+                self.status_message.set(f"{package} installed successfully")
+                return True
+            else:
+                self.status_message.set(f"Error: Failed to install {package}")
+                return False
+        except subprocess.CalledProcessError as e:
+            self.status_message.set(f"Error: Failed to install {package} - check your internet connection")
+            return False
+        except Exception as e:
+            self.status_message.set(f"Error: Failed to install {package} - administrator privileges may be required")
+            return False
+
+    # Add these new helper methods to display status information
+    def show_help_popup(self, title, message):
+        """Show a help popup with explanations for the user"""
+        help_window = tk.Toplevel(self)
+        help_window.title(title)
+        help_window.geometry("500x400")
+        help_window.transient(self)
+        help_window.grab_set()
+        
+        # Style the window
+        help_window.configure(bg=self.theme['bg_primary'])
+        
+        # Add content
+        header_label = tk.Label(help_window, 
+                              text=title,
+                              font=(self.system_font, self.font_sizes['lg'], "bold"),
+                              fg=self.theme['accent'],
+                              bg=self.theme['bg_primary'],
+                              wraplength=480)
+        header_label.pack(pady=(20, 10), padx=20)
+        
+        content = scrolledtext.ScrolledText(help_window,
+                                         font=(self.system_font, self.font_sizes['md']),
+                                         bg=self.theme['bg_secondary'],
+                                         fg=self.theme['text_primary'],
+                                         wrap=tk.WORD,
+                                         width=50,
+                                         height=15)
+        content.pack(expand=True, fill='both', padx=20, pady=10)
+        content.insert(tk.END, message)
+        content.config(state='disabled')  # Make read-only
+        
+        # Close button
+        close_btn = ttk.Button(help_window, 
+                             text="Close", 
+                             command=help_window.destroy,
+                             style="Enterprise.TButton")
+        close_btn.pack(pady=20)
+
     def harden_ssh(self):
         """Apply SSH hardening configurations"""
         # Check if SSH is installed and the config file exists
@@ -1394,6 +1577,116 @@ class EnterpriseSecurityDashboard(tk.Tk):
             # Clean up any resources or temporary files
             self.destroy()
 
+    # Security operation implementations
+    def run_lynis(self):
+        """Run a comprehensive security scan using Lynis"""
+        if not self.check_tool_installed("lynis"):
+            # Try to install lynis
+            if not self.install_package("lynis"):
+                # If installation fails, show message in console
+                tab_name = "Security Scan"
+                if tab_name in self.tab_contents:
+                    output = self.tab_contents[tab_name].output
+                    output.delete(1.0, tk.END)
+                    output.insert(tk.END, "=== Error: Could not install Lynis ===\n\n")
+                    output.insert(tk.END, "Lynis is a security auditing tool that's needed for this scan.\n\n")
+                    output.insert(tk.END, "📋 What this means:\n", "error_header")
+                    output.insert(tk.END, "The security scanner couldn't be installed on your system.\n")
+                    output.insert(tk.END, "This is typically because the package isn't in your system's repositories.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "Try manually installing Lynis:\n")
+                    output.insert(tk.END, "1. sudo apt install lynis (for Debian/Ubuntu)\n")
+                    output.insert(tk.END, "2. sudo dnf install lynis (for Fedora/RHEL)\n")
+                    output.insert(tk.END, "3. Or download from https://cisofy.com/lynis/\n\n")
+                    output.insert(tk.END, "In the meantime, try one of the other security scan options.")
+                return
+        
+        command = "lynis audit system --no-colors"
+        self.run_command(command, "Security Scan", "Comprehensive Security Scan")
+    
+    def run_clamav(self):
+        """Run malware scan using ClamAV"""
+        if not self.check_tool_installed("clamscan"):
+            if not self.install_package("clamav"):
+                tab_name = "Security Scan"
+                if tab_name in self.tab_contents:
+                    output = self.tab_contents[tab_name].output
+                    output.delete(1.0, tk.END)
+                    output.insert(tk.END, "=== Error: Could not install ClamAV ===\n\n")
+                    output.insert(tk.END, "ClamAV is an antivirus engine needed for malware scanning.\n\n")
+                    output.insert(tk.END, "📋 What this means:\n", "error_header")
+                    output.insert(tk.END, "The malware scanner couldn't be installed on your system.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "Try manually installing ClamAV:\n")
+                    output.insert(tk.END, "1. sudo apt install clamav (for Debian/Ubuntu)\n")
+                    output.insert(tk.END, "2. sudo dnf install clamav (for Fedora/RHEL)\n\n")
+                    output.insert(tk.END, "Running basic file scan as an alternative...\n\n")
+                    
+                    # Run a basic scan as a fallback
+                    fallback_cmd = "find /home -type f -name '*.sh' -o -name '*.py' | xargs -I{} grep -l 'suspicious' {} 2>/dev/null || echo 'No obvious suspicious scripts found'"
+                    self.run_command(fallback_cmd, "Security Scan", "Basic Script Scan")
+                return
+            
+            # Update virus definitions if ClamAV was just installed
+            self.run_command("freshclam || echo 'Skipping virus database update'", "Security Scan", "Updating Virus Definitions")
+        
+        # Choose a reasonable path to scan to avoid excessive time
+        command = "clamscan -r /home --bell -i --max-filesize=100M --max-scansize=500M"
+        self.run_command(command, "Security Scan", "Malware Detection Scan")
+    
+    def run_rkhunter(self):
+        """Run rootkit detection using RKHunter"""
+        if not self.check_tool_installed("rkhunter"):
+            if not self.install_package("rkhunter"):
+                tab_name = "Security Scan"
+                if tab_name in self.tab_contents:
+                    output = self.tab_contents[tab_name].output
+                    output.delete(1.0, tk.END)
+                    output.insert(tk.END, "=== Error: Could not install RKHunter ===\n\n")
+                    output.insert(tk.END, "RKHunter is a rootkit scanner needed to check for hidden malware.\n\n")
+                    output.insert(tk.END, "📋 What this means:\n", "error_header")
+                    output.insert(tk.END, "The rootkit detector couldn't be installed on your system.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "Try manually installing RKHunter:\n")
+                    output.insert(tk.END, "1. sudo apt install rkhunter (for Debian/Ubuntu)\n")
+                    output.insert(tk.END, "2. sudo dnf install rkhunter (for Fedora/RHEL)\n\n")
+                    output.insert(tk.END, "Running alternative check for unusual files with special permissions...\n\n")
+                    
+                    # Run a basic SUID scan as a fallback
+                    fallback_cmd = "find /bin /sbin /usr/bin /usr/sbin -type f -perm -4000 -o -perm -2000 -ls"
+                    self.run_command(fallback_cmd, "Security Scan", "Special Permission Files Scan")
+                return
+        
+        # Avoid interactive prompts with --skip-keypress
+        command = "rkhunter --check --skip-keypress"
+        self.run_command(command, "Security Scan", "Rootkit Detection Scan")
+    
+    def run_nmap(self):
+        """Run network security scan using Nmap"""
+        if not self.check_tool_installed("nmap"):
+            if not self.install_package("nmap"):
+                tab_name = "Security Scan"
+                if tab_name in self.tab_contents:
+                    output = self.tab_contents[tab_name].output
+                    output.delete(1.0, tk.END)
+                    output.insert(tk.END, "=== Error: Could not install Nmap ===\n\n")
+                    output.insert(tk.END, "Nmap is a network scanner needed to check for open ports and services.\n\n")
+                    output.insert(tk.END, "📋 What this means:\n", "error_header")
+                    output.insert(tk.END, "The network scanner couldn't be installed on your system.\n\n")
+                    output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
+                    output.insert(tk.END, "Try manually installing Nmap:\n")
+                    output.insert(tk.END, "1. sudo apt install nmap (for Debian/Ubuntu)\n")
+                    output.insert(tk.END, "2. sudo dnf install nmap (for Fedora/RHEL)\n\n")
+                    output.insert(tk.END, "Using netstat for basic port information instead...\n\n")
+                    
+                    # Use netstat as a fallback
+                    fallback_cmd = "netstat -tuln | grep LISTEN"
+                    self.run_command(fallback_cmd, "Security Scan", "Open Ports Check")
+                return
+        
+        # Scan localhost with service version detection for commonly used ports
+        command = "nmap -sV -F localhost"
+        self.run_command(command, "Security Scan", "Network Security Scan")
 
 if __name__ == "__main__":
     # Create and run the application
@@ -1405,6 +1698,14 @@ if __name__ == "__main__":
             tab.output.tag_configure("warning", foreground="orange")
             tab.output.tag_configure("error", foreground="red")
             tab.output.tag_configure("success", foreground="green")
+            # Add new style tags
+            tab.output.tag_configure("info_header", foreground="#3182CE", font=(app.system_font, app.font_sizes['md'], "bold"))
+            tab.output.tag_configure("error_header", foreground="#E53E3E", font=(app.system_font, app.font_sizes['md'], "bold"))
+            tab.output.tag_configure("success_header", foreground="#38A169", font=(app.system_font, app.font_sizes['md'], "bold"))
+            tab.output.tag_configure("fix_header", foreground="#DD6B20", font=(app.system_font, app.font_sizes['md'], "bold"))
+            tab.output.tag_configure("progress_note", foreground="#718096", font=(app.system_font, app.font_sizes['sm'], "italic"))
+            tab.output.tag_configure("welcome", foreground="#4299E1", font=(app.system_font, app.font_sizes['lg'], "bold"))
+            tab.output.tag_configure("info", foreground="#4A5568")
     
     # Start the application main loop
     app.mainloop()

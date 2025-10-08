@@ -13,10 +13,7 @@ from datetime import datetime
 import platform
 import shutil
 
-# Ensure script runs with sudo privileges:
-if os.geteuid() != 0:
-    print("This script requires sudo privileges. Please run with sudo.")
-    sys.exit(1)
+# This script will request sudo privileges for specific commands when needed.
 
 class EnterpriseSecurityDashboard(tk.Tk):
     """Enterprise-grade Security Dashboard with responsive design,
@@ -967,7 +964,7 @@ class EnterpriseSecurityDashboard(tk.Tk):
         thread.daemon = True
         thread.start()
     
-    def run_command(self, command, tab_name, description):
+    def run_command(self, command, tab_name, description, input_text=None):
         """Run a system command and display output in the specified tab"""
         # Get the appropriate output widget
         if tab_name in self.tab_contents:
@@ -975,7 +972,7 @@ class EnterpriseSecurityDashboard(tk.Tk):
             output.delete(1.0, tk.END)
         else:
             self.status_message.set(f"Error: Tab {tab_name} not found")
-            return
+            return -1
         
         # Clear output and display header
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -985,20 +982,38 @@ class EnterpriseSecurityDashboard(tk.Tk):
         # Add user-friendly explanation based on the operation type
         self.add_operation_explanation(output, description)
         
+        process = None
         try:
-            # Display command being executed
-            output.insert(tk.END, f"Executing: {command}\n\n")
-            output.update_idletasks()  # Update display
+            if isinstance(command, list):
+                # New, secure way: command is a list, use shell=False
+                output.insert(tk.END, f"Executing: {' '.join(command)}\n\n")
+                output.update_idletasks()  # Update display
+                
+                process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE if input_text else None,
+                    text=True
+                )
+            else:
+                # Old, insecure way: command is a string, use shell=True
+                output.insert(tk.END, f"Executing: {command}\n\n")
+                output.update_idletasks()  # Update display
+                
+                process = subprocess.Popen(
+                    command,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE if input_text else None,
+                    text=True
+                )
             
-            # Execute the command
-            process = subprocess.Popen(
-                command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            
+            if input_text:
+                process.stdin.write(input_text)
+                process.stdin.close()
+
             # Read and display output in real-time
             for line in process.stdout:
                 if "error" in line.lower() or "warning" in line.lower():
@@ -1036,22 +1051,14 @@ class EnterpriseSecurityDashboard(tk.Tk):
                     output.insert(tk.END, "The required security tool couldn't be found on your system.\n")
                     output.insert(tk.END, "This usually happens when the software isn't installed correctly.\n\n")
                     output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
-                    output.insert(tk.END, f"Try manually installing the required tool:\n")
-                    
-                    # Suggest appropriate installation command
-                    if self.check_tool_installed("apt"):
-                        output.insert(tk.END, f"sudo apt install {command.split()[0]}\n")
-                    elif self.check_tool_installed("dnf"):
-                        output.insert(tk.END, f"sudo dnf install {command.split()[0]}\n")
-                    else:
-                        output.insert(tk.END, f"Install {command.split()[0]} using your system's package manager\n")
+                    output.insert(tk.END, f"Try manually installing the required tool.\n")
                         
                 elif "permission denied" in error_output.lower():
                     output.insert(tk.END, "You don't have enough permissions to run this security operation.\n")
                     output.insert(tk.END, "Security tools often need administrator (root) privileges.\n\n")
                     output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
-                    output.insert(tk.END, "- Make sure you launched this application with sudo\n")
-                    output.insert(tk.END, "- Try restarting the application with: sudo python3 security.py\n")
+                    output.insert(tk.END, "- This application will now try to run the command with sudo.\n")
+                    output.insert(tk.END, "- You may be prompted for your password.\n")
                 elif "no such file or directory" in error_output.lower():
                     output.insert(tk.END, "A required file or directory wasn't found on your system.\n\n")
                     output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
@@ -1064,7 +1071,6 @@ class EnterpriseSecurityDashboard(tk.Tk):
                     output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
                     output.insert(tk.END, "- Check the error output above for specific details\n")
                     output.insert(tk.END, "- Make sure all required software is installed\n")
-                    output.insert(tk.END, "- Try running the Security Dashboard with root privileges\n")
                 
                 self.status_message.set("Operation failed - check output for details")
                 
@@ -1075,8 +1081,12 @@ class EnterpriseSecurityDashboard(tk.Tk):
             output.insert(tk.END, "This might be because of missing programs or system limitations.\n\n")
             output.insert(tk.END, "🔧 How to fix this:\n", "fix_header")
             output.insert(tk.END, "- Make sure you have the necessary security tools installed\n")
-            output.insert(tk.END, "- Try running the Security Dashboard with root privileges\n")
             self.status_message.set(f"Error: {str(e)}")
+
+        if process:
+            return process.returncode
+        else:
+            return -1
 
     def add_operation_explanation(self, output, description):
         """Add user-friendly explanation of security operations"""
@@ -1152,35 +1162,35 @@ class EnterpriseSecurityDashboard(tk.Tk):
 
     def install_package(self, package):
         """Install a package using the appropriate package manager"""
-        # Determine package manager
         package_manager = None
-        install_cmd = None
+        install_cmd = []
         
         if self.check_tool_installed("apt"):
             package_manager = "apt"
-            install_cmd = f"apt update && apt install -y {package}"
+            self.run_command(["sudo", "apt", "update"], "Installation", f"Updating package lists to install {package}")
+            install_cmd = ["sudo", "apt", "install", "-y", package]
         elif self.check_tool_installed("dnf"):
             package_manager = "dnf"
-            install_cmd = f"dnf install -y {package}"
+            install_cmd = ["sudo", "dnf", "install", "-y", package]
         elif self.check_tool_installed("yum"):
             package_manager = "yum"
-            install_cmd = f"yum install -y {package}"
+            install_cmd = ["sudo", "yum", "install", "-y", package]
         elif self.check_tool_installed("pacman"):
             package_manager = "pacman"
-            install_cmd = f"pacman -S --noconfirm {package}"
+            install_cmd = ["sudo", "pacman", "-S", "--noconfirm", package]
         elif self.check_tool_installed("zypper"):
             package_manager = "zypper"
-            install_cmd = f"zypper install -y {package}"
+            install_cmd = ["sudo", "zypper", "install", "-y", package]
         elif self.check_tool_installed("brew") and platform.system() == "Darwin":
             package_manager = "brew"
-            install_cmd = f"brew install {package}"
+            install_cmd = ["brew", "install", package]
         else:
             self.status_message.set(f"Error: Cannot install {package}, unsupported package manager")
             return False
         
         try:
             self.status_message.set(f"Installing {package} using {package_manager}... This may take a moment.")
-            result = subprocess.run(install_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(install_cmd, check=True, capture_output=True, text=True)
             if result.returncode == 0:
                 self.status_message.set(f"{package} installed successfully")
                 return True
@@ -1188,10 +1198,10 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 self.status_message.set(f"Error: Failed to install {package}")
                 return False
         except subprocess.CalledProcessError as e:
-            self.status_message.set(f"Error: Failed to install {package} - check your internet connection")
+            self.status_message.set(f"Error: Failed to install {package}: {e.stderr}")
             return False
         except Exception as e:
-            self.status_message.set(f"Error: Failed to install {package} - administrator privileges may be required")
+            self.status_message.set(f"Error: Failed to install {package}: {str(e)}")
             return False
 
     # Add these new helper methods to display status information
@@ -1247,9 +1257,11 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 output.insert(tk.END, "To install SSH server: sudo apt install openssh-server\n")
             return
         
-        # Create a backup of original config
-        backup_command = "cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup"
-        
+        self.run_command(["sudo", "cp", "/etc/ssh/sshd_config", "/etc/ssh/sshd_config.backup"], "System Hardening", "Backing up SSH config")
+        self.run_command(["sudo", "sed", "-i", "s/#PasswordAuthentication yes/PasswordAuthentication no/", "/etc/ssh/sshd_config"], "System Hardening", "Disabling SSH password authentication")
+        self.run_command(["sudo", "sed", "-i", "s/#PermitRootLogin prohibit-password/PermitRootLogin no/", "/etc/ssh/sshd_config"], "System Hardening", "Disabling root login")
+        self.run_command(["sudo", "sed", "-i", "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/", "/etc/ssh/sshd_config"], "System Hardening", "Enabling public key authentication")
+
         # Detect SSH service name
         ssh_service_name = "sshd"
         if self.check_service_exists("ssh.service"):
@@ -1258,30 +1270,9 @@ class EnterpriseSecurityDashboard(tk.Tk):
             ssh_service_name = "sshd"
         elif self.check_service_exists("openssh.service"):
             ssh_service_name = "openssh"
-        else:
-            # If we can't find a service, just apply config changes without restart
-            hardening_commands = [
-                backup_command,
-                "sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config",
-                "sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config",
-                "sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
-                "echo 'SSH hardening applied, but no SSH service detected to restart'"
-            ]
-            command = " && ".join(hardening_commands)
-            self.run_command(command, "System Hardening", "SSH Hardening (no service restart)")
-            return
         
-        # Apply multiple SSH hardening rules with detected service name
-        hardening_commands = [
-            backup_command,
-            "sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config",
-            "sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config",
-            "sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
-            f"systemctl restart {ssh_service_name}.service || service {ssh_service_name} restart"
-        ]
-        
-        command = " && ".join(hardening_commands)
-        self.run_command(command, "System Hardening", "SSH Hardening")
+        if self.run_command(["sudo", "systemctl", "restart", f"{ssh_service_name}.service"], "System Hardening", "Restarting SSH service") != 0:
+            self.run_command(["sudo", "service", ssh_service_name, "restart"], "System Hardening", "Restarting SSH service (fallback)")
     
     def setup_ufw(self):
         """Configure Uncomplicated Firewall (UFW)"""
@@ -1299,26 +1290,21 @@ class EnterpriseSecurityDashboard(tk.Tk):
                     # Check if any other firewall tool is available
                     if self.check_tool_installed("firewalld"):
                         output.insert(tk.END, "\nDetected firewalld. You can use that instead.\n")
-                        self.run_command("firewall-cmd --state", "System Hardening", "Firewalld Status")
+                        self.run_command(["firewall-cmd", "--state"], "System Hardening", "Firewalld Status")
                     elif self.check_tool_installed("iptables"):
                         output.insert(tk.END, "\nDetected iptables. Showing current rules:\n")
-                        self.run_command("iptables -L", "System Hardening", "IPTables Rules")
+                        self.run_command(["sudo", "iptables", "-L"], "System Hardening", "IPTables Rules")
                 return
         
         # Configure basic firewall rules
-        commands = [
-            "ufw --force reset",  # Reset to default
-            "ufw default deny incoming",  # Default deny incoming
-            "ufw default allow outgoing",  # Default allow outgoing
-            "ufw allow ssh",  # Allow SSH
-            "ufw allow 80/tcp",  # Allow HTTP
-            "ufw allow 443/tcp",  # Allow HTTPS
-            "echo 'y' | ufw enable",  # Enable firewall
-            "ufw status verbose"  # Show status
-        ]
-        
-        command = " && ".join(commands)
-        self.run_command(command, "System Hardening", "Firewall Configuration")
+        self.run_command(["sudo", "ufw", "--force", "reset"], "System Hardening", "Resetting firewall")
+        self.run_command(["sudo", "ufw", "default", "deny", "incoming"], "System Hardening", "Denying incoming traffic by default")
+        self.run_command(["sudo", "ufw", "default", "allow", "outgoing"], "System Hardening", "Allowing outgoing traffic by default")
+        self.run_command(["sudo", "ufw", "allow", "ssh"], "System Hardening", "Allowing SSH")
+        self.run_command(["sudo", "ufw", "allow", "80/tcp"], "System Hardening", "Allowing HTTP")
+        self.run_command(["sudo", "ufw", "allow", "443/tcp"], "System Hardening", "Allowing HTTPS")
+        self.run_command(["sudo", "ufw", "enable"], "System Hardening", "Enabling firewall", input_text="y\n")
+        self.run_command(["sudo", "ufw", "status", "verbose"], "System Hardening", "Firewall status")
     
     def secure_web(self):
         """Apply security measures to web directories"""
@@ -1335,22 +1321,18 @@ class EnterpriseSecurityDashboard(tk.Tk):
             return
         
         # Apply permission hardening
-        command = f"""
-        find {web_root} -type d -exec chmod 750 {{}} \\;
-        find {web_root} -type f -exec chmod 640 {{}} \\;
-        chown -R www-data:www-data {web_root}
-        """
-        
-        self.run_command(command, "System Hardening", "Web Directory Security")
+        self.run_command(["sudo", "find", web_root, "-type", "d", "-exec", "chmod", "750", "{{}}", ";"], "System Hardening", "Securing web directories")
+        self.run_command(["sudo", "find", web_root, "-type", "f", "-exec", "chmod", "640", "{{}}", ";"], "System Hardening", "Securing web files")
+        self.run_command(["sudo", "chown", "-R", "www-data:www-data", web_root], "System Hardening", "Setting web directory ownership")
     
     def check_service_exists(self, service_name):
         """Check if a system service exists"""
         try:
-            result = subprocess.run(f"systemctl status {service_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(["systemctl", "status", service_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             return result.returncode != 4  # 4 means unit not found
         except Exception:
             try:
-                result = subprocess.run(f"service {service_name.split('.')[0]} status", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                result = subprocess.run(["service", service_name.split('.')[0], "status"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 return result.returncode != 4
             except Exception:
                 return False
@@ -1363,15 +1345,21 @@ class EnterpriseSecurityDashboard(tk.Tk):
             if success:
                 try:
                     # Try to initialize vnstat on default interface
-                    interfaces_cmd = subprocess.run("ip route | grep default | awk '{print $5}'", 
-                                                 shell=True, stdout=subprocess.PIPE, text=True)
-                    default_interface = interfaces_cmd.stdout.strip()
+                    result = subprocess.run(["ip", "route"], capture_output=True, text=True)
+                    default_interface = ""
+                    if result.returncode == 0:
+                        for line in result.stdout.splitlines():
+                            if line.startswith("default"):
+                                parts = line.split()
+                                if len(parts) >= 5:
+                                    default_interface = parts[4]
+                                    break
                     
                     if default_interface:
-                        self.run_command(f"vnstat --create -i {default_interface}", 
+                        self.run_command(["sudo", "vnstat", "--create", "-i", default_interface], 
                                         "Monitoring", "Initializing bandwidth monitoring")
                     else:
-                        self.run_command("vnstat --create", 
+                        self.run_command(["sudo", "vnstat", "--create"], 
                                         "Monitoring", "Initializing bandwidth monitoring (all interfaces)")
                 except Exception as e:
                     print(f"Error initializing vnstat: {e}")
@@ -1386,41 +1374,37 @@ class EnterpriseSecurityDashboard(tk.Tk):
                     
                     # Use ifconfig or ip as fallback
                     if self.check_tool_installed("ifconfig"):
-                        self.run_command("ifconfig", "Monitoring", "Network Interfaces Info")
+                        self.run_command(["ifconfig"], "Monitoring", "Network Interfaces Info")
                     elif self.check_tool_installed("ip"):
-                        self.run_command("ip -s link", "Monitoring", "Network Interfaces Info")
+                        self.run_command(["ip", "-s", "link"], "Monitoring", "Network Interfaces Info")
                     else:
                         output.insert(tk.END, "No network monitoring tools available.\n")
                 return
         
         # Run vnstat with fallback options
-        if subprocess.run("vnstat -h", shell=True, stderr=subprocess.PIPE).returncode == 0:
-            self.run_command("vnstat -h", "Monitoring", "Network Bandwidth Monitoring")
-        else:
-            self.run_command("vnstat", "Monitoring", "Network Bandwidth Summary")
+        if self.run_command(["vnstat", "-h"], "Monitoring", "Network Bandwidth Monitoring") != 0:
+            self.run_command(["vnstat"], "Monitoring", "Network Bandwidth Summary")
     
     def update_system(self):
         """Update system packages"""
         # Determine package manager based on system
         if self.check_tool_installed("apt"):
-            command = "apt update && apt upgrade -y"
+            self.run_command(["sudo", "apt", "update"], "System Hardening", "Updating package lists")
+            self.run_command(["sudo", "apt", "upgrade", "-y"], "System Hardening", "Upgrading packages")
         elif self.check_tool_installed("dnf"):
-            command = "dnf update -y"
+            self.run_command(["sudo", "dnf", "update", "-y"], "System Hardening", "System Update")
         elif self.check_tool_installed("yum"):
-            command = "yum update -y"
+            self.run_command(["sudo", "yum", "update", "-y"], "System Hardening", "System Update")
         elif self.check_tool_installed("pacman"):
-            command = "pacman -Syu --noconfirm"
+            self.run_command(["sudo", "pacman", "-Syu", "--noconfirm"], "System Hardening", "System Update")
         elif self.check_tool_installed("zypper"):
-            command = "zypper update -y"
+            self.run_command(["sudo", "zypper", "update", "-y"], "System Hardening", "System Update")
         elif self.check_tool_installed("brew") and platform.system() == "Darwin":
-            command = "brew update && brew upgrade"
+            self.run_command(["brew", "update"], "System Hardening", "Updating Homebrew")
+            self.run_command(["brew", "upgrade"], "System Hardening", "Upgrading Homebrew packages")
         else:
             self.status_message.set("Error: Unsupported package manager")
             return
-        
-        self.run_command(command, "System Hardening", "System Update")
-    
-    def secure_web(self):
         """Apply security measures to web directories"""
         # Check if Apache or Nginx is installed
         web_root = None
@@ -1445,120 +1429,76 @@ class EnterpriseSecurityDashboard(tk.Tk):
     
     def check_resources(self):
         """Check system resource usage"""
-        commands = [
-            "echo '=== CPU Information ==='",
-            "lscpu | grep -E 'Model name|Socket|Core|Thread'",
-            "echo '=== Memory Usage ==='",
-            "free -h",
-            "echo '=== Disk Usage ==='",
-            "df -h",
-            "echo '=== Top Processes by CPU ==='",
-            "ps aux --sort=-%cpu | head -10",
-            "echo '=== Top Processes by Memory ==='",
-            "ps aux --sort=-%mem | head -10"
-        ]
-        
-        command = " && ".join(commands)
-        self.run_command(command, "Monitoring", "System Resource Analysis")  # Changed from "System Monitoring"
+        self.run_command(["lscpu"], "Monitoring", "CPU Information")
+        self.run_command(["free", "-h"], "Monitoring", "Memory Usage")
+        self.run_command(["df", "-h"], "Monitoring", "Disk Usage")
+        self.run_command(["ps", "aux", "--sort=-%cpu"], "Monitoring", "Top Processes by CPU")
+        self.run_command(["ps", "aux", "--sort=-%mem"], "Monitoring", "Top Processes by Memory")
     
     def analyze_logs(self):
         """Analyze system logs for security issues"""
         if not self.check_tool_installed("logwatch"):
             self.install_package("logwatch")
         
-        command = "logwatch --output stdout --format text --detail high --range today"
-        self.run_command(command, "Monitoring", "Security Log Analysis")  # Changed from "System Monitoring"
+        command = ["sudo", "logwatch", "--output", "stdout", "--format", "text", "--detail", "high", "--range", "today"]
+        self.run_command(command, "Monitoring", "Security Log Analysis")
     
     def generate_report(self):
         """Generate a comprehensive security report"""
         report_file = f"security_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         
-        commands = [
-            f"echo 'Security Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}' > {report_file}",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '1. System Information' >> {report_file}",
-            f"uname -a >> {report_file}",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '2. User Accounts' >> {report_file}",
-            f"cat /etc/passwd | cut -d: -f1,3,4 >> {report_file}",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '3. Network Configuration' >> {report_file}",
-            f"ip addr show | grep -E 'inet|ether' >> {report_file}",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '4. Listening Ports' >> {report_file}",
-            f"netstat -tuln >> {report_file}",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '5. System Updates' >> {report_file}",
-            f"if command -v apt &> /dev/null; then apt list --upgradable 2>/dev/null >> {report_file}; fi",
-            f"echo '======================================================' >> {report_file}",
-            f"echo '6. Security Recommendations' >> {report_file}",
-            f"if command -v lynis &> /dev/null; then lynis audit system --no-colors --quiet >> {report_file}; else echo 'Lynis not installed' >> {report_file}; fi",
-            f"echo 'Report saved to {report_file}'",
-            f"cat {report_file}"
-        ]
-        
-        command = " && ".join(commands)
-        self.run_command(command, "Reports", f"Generating Security Report: {report_file}")
+        try:
+            with open(report_file, "w") as f:
+                f.write(f"Security Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("======================================================\n")
+                f.write("1. System Information\n")
+                result = subprocess.run(["uname", "-a"], capture_output=True, text=True)
+                f.write(result.stdout)
+                f.write("======================================================\n")
+                f.write("2. User Accounts\n")
+                result = subprocess.run(["cat", "/etc/passwd"], capture_output=True, text=True)
+                for line in result.stdout.splitlines():
+                    parts = line.split(":")
+                    if len(parts) >= 4:
+                        f.write(f"{parts[0]}:{parts[2]}:{parts[3]}\n")
+                f.write("======================================================\n")
+                f.write("3. Network Configuration\n")
+                result = subprocess.run(["ip", "addr", "show"], capture_output=True, text=True)
+                for line in result.stdout.splitlines():
+                    if "inet" in line or "ether" in line:
+                        f.write(line + "\n")
+                f.write("======================================================\n")
+                f.write("4. Listening Ports\n")
+                result = subprocess.run(["netstat", "-tuln"], capture_output=True, text=True)
+                f.write(result.stdout)
+                f.write("======================================================\n")
+                f.write("5. System Updates\n")
+                if self.check_tool_installed("apt"):
+                    result = subprocess.run(["apt", "list", "--upgradable"], capture_output=True, text=True, stderr=subprocess.DEVNULL)
+                    f.write(result.stdout)
+                f.write("======================================================\n")
+                f.write("6. Security Recommendations\n")
+                if self.check_tool_installed("lynis"):
+                    result = subprocess.run(["sudo", "lynis", "audit", "system", "--no-colors", "--quiet"], capture_output=True, text=True)
+                    f.write(result.stdout)
+                else:
+                    f.write("Lynis not installed\n")
+            
+            # Display the report in the text widget
+            self.run_command(["cat", report_file], "Reports", f"Generated Security Report: {report_file}")
+        except Exception as e:
+            self.status_message.set(f"Error generating report: {e}")
     
     def backup_home(self):
         """Backup the home directory"""
         backup_file = f"home_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tar.gz"
         
-        command = f"tar -czf {backup_file} --exclude='.cache' /home && echo 'Backup completed: {backup_file}'"
-        self.run_command(command, "Reports", "Home Directory Backup")
+        self.run_command(["sudo", "tar", "-czf", backup_file, "--exclude=.cache", "/home"], "Reports", "Home Directory Backup")
     
     # Utility methods
     def check_tool_installed(self, tool_name):
         """Check if a tool is installed in the system"""
-        try:
-            result = subprocess.run(["which", tool_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            return result.returncode == 0
-        except Exception:
-            return False
-    
-    def install_package(self, package):
-        """Install a package using the appropriate package manager"""
-        # Determine package manager
-        package_manager = None
-        install_cmd = None
-        
-        if self.check_tool_installed("apt"):
-            package_manager = "apt"
-            install_cmd = f"apt update && apt install -y {package}"
-        elif self.check_tool_installed("dnf"):
-            package_manager = "dnf"
-            install_cmd = f"dnf install -y {package}"
-        elif self.check_tool_installed("yum"):
-            package_manager = "yum"
-            install_cmd = f"yum install -y {package}"
-        elif self.check_tool_installed("pacman"):
-            package_manager = "pacman"
-            install_cmd = f"pacman -S --noconfirm {package}"
-        elif self.check_tool_installed("zypper"):
-            package_manager = "zypper"
-            install_cmd = f"zypper install -y {package}"
-        elif self.check_tool_installed("brew") and platform.system() == "Darwin":
-            package_manager = "brew"
-            install_cmd = f"brew install {package}"
-        else:
-            self.status_message.set(f"Error: Cannot install {package}, unsupported package manager")
-            return False
-        
-        try:
-            self.status_message.set(f"Installing {package} using {package_manager}...")
-            result = subprocess.run(install_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if result.returncode == 0:
-                self.status_message.set(f"{package} installed successfully")
-                return True
-            else:
-                self.status_message.set(f"Error: Failed to install {package}")
-                return False
-        except subprocess.CalledProcessError as e:
-            self.status_message.set(f"Error: Failed to install {package}: {e}")
-            return False
-        except Exception as e:
-            self.status_message.set(f"Error: Failed to install {package}: {str(e)}")
-            return False
+        return shutil.which(tool_name) is not None
     
     def on_resize(self, event):
         """Handle window resize events"""
@@ -1601,7 +1541,7 @@ class EnterpriseSecurityDashboard(tk.Tk):
                     output.insert(tk.END, "In the meantime, try one of the other security scan options.")
                 return
         
-        command = "lynis audit system --no-colors"
+        command = ["sudo", "lynis", "audit", "system", "--no-colors"]
         self.run_command(command, "Security Scan", "Comprehensive Security Scan")
     
     def run_clamav(self):
@@ -1628,10 +1568,10 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 return
             
             # Update virus definitions if ClamAV was just installed
-            self.run_command("freshclam || echo 'Skipping virus database update'", "Security Scan", "Updating Virus Definitions")
+            self.run_command(["sudo", "freshclam"], "Security Scan", "Updating Virus Definitions")
         
         # Choose a reasonable path to scan to avoid excessive time
-        command = "clamscan -r /home --bell -i --max-filesize=100M --max-scansize=500M"
+        command = ["sudo", "clamscan", "-r", "/home", "--bell", "-i", "--max-filesize=100M", "--max-scansize=500M"]
         self.run_command(command, "Security Scan", "Malware Detection Scan")
     
     def run_rkhunter(self):
@@ -1658,7 +1598,7 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 return
         
         # Avoid interactive prompts with --skip-keypress
-        command = "rkhunter --check --skip-keypress"
+        command = ["sudo", "rkhunter", "--check", "--skip-keypress"]
         self.run_command(command, "Security Scan", "Rootkit Detection Scan")
     
     def run_nmap(self):
@@ -1685,7 +1625,7 @@ class EnterpriseSecurityDashboard(tk.Tk):
                 return
         
         # Scan localhost with service version detection for commonly used ports
-        command = "nmap -sV -F localhost"
+        command = ["sudo", "nmap", "-sV", "-F", "localhost"]
         self.run_command(command, "Security Scan", "Network Security Scan")
 
 if __name__ == "__main__":

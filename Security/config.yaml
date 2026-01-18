@@ -1,0 +1,33 @@
+app:
+  name: "Enterprise Security Dashboard"
+  version: "2.1.0"
+  log_file: "security_dashboard.log"
+  log_level: "INFO"
+  debug_mode: false
+  simulation_mode: false
+
+timeouts:
+  default: 30
+  scan: 600
+  update: 300
+  install: 300
+
+security:
+  allowed_ports:
+    - 22
+    - 80
+    - 443
+  critical_services:
+    - sshd
+    - ufw
+    - fail2ban
+  
+paths:
+  ssh_config: "/etc/ssh/sshd_config"
+  web_root: "/var/www/html"
+  log_dir: "/var/log"
+
+features:
+  enable_notifications: false
+  enable_history: true
+  dry_run: false

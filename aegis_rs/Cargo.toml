@@ -1,0 +1,30 @@
+[package]
+name = "aegis_rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Error Handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# CLI & Data
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+
+# System Information (Replacing psutil)
+sysinfo = "0.30"
+async-trait = "0.1"
+which = "6.0"
+
+# Async Runtime
+tokio = { version = "1.32", features = ["full"] }
+
+# GUI (The Bridge)
+iced = { version = "0.12", features = ["tokio", "canvas", "svg"] }
+
+# Logging
+env_logger = "0.10"
+log = "0.4"

@@ -1,0 +1,13 @@
+app:
+  name: "Aegis Security Control"
+  version: "3.0.0-alpha"
+  theme: "Dark"  # Options: System, Dark, Light
+  color_theme: "blue"  # Options: blue, green, dark-blue
+
+security:
+  simulation_mode: auto  # auto, true, false
+  sudo_timeout: 300
+
+monitoring:
+  refresh_rate_ms: 1000
+  history_length: 60

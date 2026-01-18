@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::Manager;
-use sysinfo::{System, SystemExt};
+use sysinfo::System;
 
 // Define the payload struct
 #[derive(serde::Serialize)]
